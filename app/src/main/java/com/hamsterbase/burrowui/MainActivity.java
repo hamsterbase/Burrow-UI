@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,6 +30,7 @@ public class MainActivity extends Activity {
 
     private TextView timeTextView;
     private TextView dateTextView;
+    private TextView debugTextView;
     private LinearLayout appLinearLayout;
     private List<ResolveInfo> allApps;
     private List<ResolveInfo> selectedApps = new ArrayList<>();
@@ -43,14 +45,23 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_main);
 
         timeTextView = findViewById(R.id.timeTextView);
         dateTextView = findViewById(R.id.dateTextView);
         appLinearLayout = findViewById(R.id.appLinearLayout);
+
+
+        debugTextView = findViewById(R.id.debugTextView);
+        if (BuildConfig.DEBUG) {
+            debugTextView.setVisibility(View.VISIBLE);
+            String debugInfo = "Debug: " + Build.MODEL + " - " + Build.VERSION.RELEASE;
+            debugTextView.setText(debugInfo);
+        } else {
+            debugTextView.setVisibility(View.GONE);
+        }
 
         settingsManager = new SettingsManager(this);
 
@@ -59,7 +70,7 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 updateTime();
-                handler.postDelayed(this, 1*1000); // Update every minute
+                handler.postDelayed(this, 1 * 1000); // Update every minute
             }
         };
 
@@ -115,7 +126,7 @@ public class MainActivity extends Activity {
     private void updateBatteryStatus(Intent intent) {
         int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
         int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-        float batteryPct = level * 100 / (float)scale;
+        float batteryPct = level * 100 / (float) scale;
         batteryText = String.format(Locale.getDefault(), " %.0f%%", batteryPct);
     }
 

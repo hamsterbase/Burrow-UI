@@ -6,8 +6,11 @@ android {
     namespace = "com.hamsterbase.burrowui"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
-        vectorDrawables.useSupportLibrary = true
         applicationId = "com.hamsterbase.burrowui"
         minSdk = 24
         targetSdk = 34
@@ -18,6 +21,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
