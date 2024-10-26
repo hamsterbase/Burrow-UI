@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/white"
-    android:padding="24dp"
-    >
+    android:padding="24dp">
+
     <TextView
         android:id="@+id/timeTextView"
         android:layout_width="wrap_content"
         android:textSize="80dp"
         android:layout_height="100dp"
         android:gravity="center"
-        />
+        tools:ignore="SpUsage" />
+
     <TextView
         android:id="@+id/debugTextView"
         android:layout_width="wrap_content"
@@ -21,19 +23,21 @@
         android:textColor="#FF0000"
         android:textSize="14sp"
         android:visibility="gone"
-        />
+        tools:ignore="HardcodedText" />
+
     <TextView
         android:id="@+id/dateTextView"
         android:layout_width="wrap_content"
-        android:textSize="20sp"
+        android:textSize="20dp"
         android:layout_height="24dp"
         android:gravity="center"
-        />
+        tools:ignore="SpUsage" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="48dp"
-        >
+        android:layout_marginTop="48dp">
+
         <LinearLayout
             android:id="@+id/appLinearLayout"
             android:layout_width="match_parent"
