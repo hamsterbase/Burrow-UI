@@ -37,7 +37,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         appListView = findViewById(R.id.appListView);
 
         settingsManager = new SettingsManager(this);
-        appManagementService = AppManagementService.getInstance(this);
+        appManagementService = ((BurrowUIApplication) getApplication()).getAppManagementService();
         loadApps();
         appAdapter = new AppAdapter();
         appListView.setAdapter(appAdapter);
@@ -124,7 +124,6 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         return false;
     }
 
-
     private void addSelectedApp(AppInfo app) {
         Map<String, String> meta = new HashMap<>();
         meta.put("packageName", app.getPackageName());
@@ -135,7 +134,6 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         settingsManager.pushSelectedItem(newItem);
         selectedItems.add(newItem);
     }
-
 
     private void removeSelectedApp(AppInfo app) {
         for (int i = 0; i < selectedItems.size(); i++) {
