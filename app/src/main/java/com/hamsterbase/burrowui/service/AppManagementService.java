@@ -3,6 +3,9 @@ package com.hamsterbase.burrowui.service;
 import android.content.Context;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -19,12 +22,14 @@ public class AppManagementService {
     private final Map<String, Drawable> iconCache;
     private final LauncherApps launcherApps;
     private final UserManager userManager;
+    private final PackageManager packageManager;
 
     private AppManagementService(Context context) {
         this.context = context.getApplicationContext();
         this.iconCache = new HashMap<>();
         this.launcherApps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
         this.userManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
+        this.packageManager = context.getPackageManager();
     }
 
     public static synchronized AppManagementService getInstance(Context context) {
@@ -57,22 +62,26 @@ public class AppManagementService {
     }
 
     public Drawable getIcon(String packageName, String userId) {
-        String cacheKey = packageName + (userId != null ? userId : "");
+        String cacheKey = packageName + (userId != null ? ":" + userId : "");
 
-        // Check cache first
         Drawable cachedIcon = iconCache.get(cacheKey);
         if (cachedIcon != null) {
             return cachedIcon;
         }
 
-        // Load icon
-        Drawable icon = loadIconFromLauncherApps(packageName, userId);
-        iconCache.put(cacheKey, icon);
 
-        return icon;
+        return loadIconFromLauncherApps(packageName, userId);
     }
 
     private Drawable loadIconFromLauncherApps(String packageName, String userId) {
+        if (userId == null) {
+            try {
+                return packageManager.getApplicationIcon(packageName);
+            } catch (PackageManager.NameNotFoundException e) {
+                return null;
+            }
+        }
+
         UserHandle userHandle = null;
         if (userId != null) {
             for (UserHandle user : userManager.getUserProfiles()) {
@@ -82,19 +91,30 @@ public class AppManagementService {
                 }
             }
         }
-
         if (userHandle == null) {
-            userHandle = android.os.Process.myUserHandle();
+            return null;
         }
-
+        try {
+            iconCache.put(packageName, copyIcon(packageManager.getApplicationIcon(packageName)));
+        } catch (PackageManager.NameNotFoundException e) {
+            //
+        }
         List<LauncherActivityInfo> activities = launcherApps.getActivityList(packageName, userHandle);
         if (!activities.isEmpty()) {
             return activities.get(0).getIcon(0);
         }
-
-        // Return a default icon if the package is not found
-        return context.getResources().getDrawable(android.R.drawable.sym_def_app_icon);
+        return null;
     }
 
+    public Drawable copyIcon(Drawable icon) {
+        if (icon instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) icon).getBitmap();
+            return new BitmapDrawable(context.getResources(), bitmap.copy(bitmap.getConfig(), true));
+        }
+        return icon.getConstantState().newDrawable().mutate();
+    }
 
 }
+
+
+

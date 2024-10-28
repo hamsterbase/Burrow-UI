@@ -124,6 +124,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         return false;
     }
 
+
     private void addSelectedApp(AppInfo app) {
         Map<String, String> meta = new HashMap<>();
         meta.put("packageName", app.getPackageName());
