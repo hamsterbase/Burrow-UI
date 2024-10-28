@@ -43,7 +43,6 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         appListView.setDivider(null);
         appListView.setDividerHeight(0);
 
-
         settingsManager = new SettingsManager(this);
         appManagementService = ((BurrowUIApplication) getApplication()).getAppManagementService();
         loadApps();
@@ -61,6 +60,9 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         selectedState = new SparseArray<>();
         for (int i = 0; i < allApps.size(); i++) {
             selectedState.put(i, isAppSelected(allApps.get(i)));
+        }
+        if (appAdapter != null) {
+            appAdapter.notifyDataSetChanged();
         }
     }
 
@@ -91,7 +93,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
                 convertView = inflater.inflate(R.layout.settings_app_item, parent, false);
@@ -108,22 +110,30 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
             holder.appName.setText(app.getLabel());
 
             boolean isSelected = selectedState.get(position);
-            holder.appCheckImage.setImageResource(isSelected ? R.drawable.ic_checked : R.drawable.ic_unchecked);
+            updateCheckImage(holder.appCheckImage, isSelected);
 
             loadAppIcon(holder.appIcon, app);
 
-            convertView.setOnClickListener(v -> {
-                boolean newState = !isSelected;
-                selectedState.put(position, newState);
-                if (newState) {
-                    addSelectedApp(app);
-                } else {
-                    removeSelectedApp(app);
+            convertView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean newState = !selectedState.get(position);
+                    selectedState.put(position, newState);
+                    if (newState) {
+                        addSelectedApp(app);
+                    } else {
+                        removeSelectedApp(app);
+                    }
+                    updateCheckImage(holder.appCheckImage, newState);
+                    notifyDataSetChanged();
                 }
-                holder.appCheckImage.setImageResource(newState ? R.drawable.ic_checked : R.drawable.ic_unchecked);
             });
 
             return convertView;
+        }
+
+        private void updateCheckImage(ImageView imageView, boolean isSelected) {
+            imageView.setImageResource(isSelected ? R.drawable.ic_checked : R.drawable.ic_unchecked);
         }
     }
 
@@ -190,7 +200,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
             SettingsManager.SelectedItem item = selectedItems.get(i);
             if (item.getType().equals("application") &&
                     item.getMeta().get("packageName").equals(app.getPackageName()) &&
-                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get(1)))) {
+                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
                 settingsManager.deleteSelectedItem(i);
                 selectedItems.remove(i);
                 break;
