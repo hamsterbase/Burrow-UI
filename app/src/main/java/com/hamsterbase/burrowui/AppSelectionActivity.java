@@ -40,6 +40,9 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_app_selection);
         appListView = findViewById(R.id.appListView);
+        appListView.setDivider(null);
+        appListView.setDividerHeight(0);
+
 
         settingsManager = new SettingsManager(this);
         appManagementService = ((BurrowUIApplication) getApplication()).getAppManagementService();
@@ -186,7 +189,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         for (int i = 0; i < selectedItems.size(); i++) {
             SettingsManager.SelectedItem item = selectedItems.get(i);
             if (item.getType().equals("application") &&
-                    item.getMeta().get(0).equals(app.getPackageName()) &&
+                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
                     (app.getUserId() == null || app.getUserId().equals(item.getMeta().get(1)))) {
                 settingsManager.deleteSelectedItem(i);
                 selectedItems.remove(i);
