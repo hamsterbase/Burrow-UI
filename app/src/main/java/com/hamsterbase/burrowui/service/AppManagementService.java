@@ -20,6 +20,7 @@ public class AppManagementService {
     private static AppManagementService instance;
     private final Context context;
     private final Map<String, Drawable> iconCache;
+    private final Map<String, UserHandle> userCache;
     private final LauncherApps launcherApps;
     private final UserManager userManager;
     private final PackageManager packageManager;
@@ -27,9 +28,11 @@ public class AppManagementService {
     private AppManagementService(Context context) {
         this.context = context.getApplicationContext();
         this.iconCache = new HashMap<>();
+        this.userCache = new HashMap<>();
         this.launcherApps = (LauncherApps) context.getSystemService(Context.LAUNCHER_APPS_SERVICE);
         this.userManager = (UserManager) context.getSystemService(Context.USER_SERVICE);
         this.packageManager = context.getPackageManager();
+        initUserCache();
     }
 
     public static synchronized AppManagementService getInstance(Context context) {
@@ -37,6 +40,13 @@ public class AppManagementService {
             instance = new AppManagementService(context);
         }
         return instance;
+    }
+
+    private void initUserCache() {
+        List<UserHandle> users = userManager.getUserProfiles();
+        for (UserHandle user : users) {
+            userCache.put(String.valueOf(user.hashCode()), user);
+        }
     }
 
     public List<AppInfo> listApps() {
@@ -69,7 +79,6 @@ public class AppManagementService {
             return cachedIcon;
         }
 
-
         return loadIconFromLauncherApps(packageName, userId);
     }
 
@@ -81,13 +90,7 @@ public class AppManagementService {
                 return null;
             }
         }
-        UserHandle userHandle = null;
-        for (UserHandle user : userManager.getUserProfiles()) {
-            if (String.valueOf(user.hashCode()).equals(userId)) {
-                userHandle = user;
-                break;
-            }
-        }
+        UserHandle userHandle = userCache.get(userId);
         if (userHandle == null) {
             return null;
         }
@@ -100,7 +103,10 @@ public class AppManagementService {
         }
         List<LauncherActivityInfo> activities = launcherApps.getActivityList(packageName, userHandle);
         if (!activities.isEmpty()) {
-            return activities.get(0).getIcon(0);
+            String cacheKey = packageName + ":" + userId;
+            Drawable icon = activities.get(0).getIcon(0);
+            iconCache.put(cacheKey, icon);
+            return icon;
         }
         return null;
     }
@@ -112,8 +118,4 @@ public class AppManagementService {
         }
         return icon.getConstantState().newDrawable().mutate();
     }
-
 }
-
-
-
