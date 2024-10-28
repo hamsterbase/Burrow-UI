@@ -1,7 +1,10 @@
 package com.hamsterbase.burrowui;
 
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import android.widget.TextView;
 import com.hamsterbase.burrowui.service.AppInfo;
 import com.hamsterbase.burrowui.service.AppManagementService;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +30,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     private AppAdapter appAdapter;
     private SettingsManager settingsManager;
     private AppManagementService appManagementService;
+    private SparseArray<Boolean> selectedState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +55,10 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     private void loadApps() {
         allApps = appManagementService.listApps();
         selectedItems = settingsManager.getSelectedItems();
+        selectedState = new SparseArray<>();
+        for (int i = 0; i < allApps.size(); i++) {
+            selectedState.put(i, isAppSelected(allApps.get(i)));
+        }
     }
 
     public void onBackClick() {
@@ -57,6 +66,12 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     }
 
     private class AppAdapter extends BaseAdapter {
+        private LayoutInflater inflater;
+
+        AppAdapter() {
+            inflater = LayoutInflater.from(AppSelectionActivity.this);
+        }
+
         @Override
         public int getCount() {
             return allApps.size();
@@ -76,7 +91,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = LayoutInflater.from(AppSelectionActivity.this).inflate(R.layout.settings_app_item, parent, false);
+                convertView = inflater.inflate(R.layout.settings_app_item, parent, false);
                 holder = new ViewHolder();
                 holder.appIcon = convertView.findViewById(R.id.appIcon);
                 holder.appName = convertView.findViewById(R.id.appName);
@@ -87,14 +102,16 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
             }
 
             AppInfo app = allApps.get(position);
-            holder.appIcon.setImageDrawable(appManagementService.getIcon(app.getPackageName(), app.getUserId()));
             holder.appName.setText(app.getLabel());
 
-            boolean isSelected = isAppSelected(app);
+            boolean isSelected = selectedState.get(position);
             holder.appCheckImage.setImageResource(isSelected ? R.drawable.ic_checked : R.drawable.ic_unchecked);
 
+            loadAppIcon(holder.appIcon, app);
+
             convertView.setOnClickListener(v -> {
-                boolean newState = !isAppSelected(app);
+                boolean newState = !isSelected;
+                selectedState.put(position, newState);
                 if (newState) {
                     addSelectedApp(app);
                 } else {
@@ -105,11 +122,41 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
 
             return convertView;
         }
+    }
 
-        private class ViewHolder {
-            ImageView appIcon;
-            TextView appName;
-            ImageView appCheckImage;
+    private static class ViewHolder {
+        ImageView appIcon;
+        TextView appName;
+        ImageView appCheckImage;
+    }
+
+    private void loadAppIcon(ImageView imageView, AppInfo app) {
+        new LoadIconTask(imageView).execute(app);
+    }
+
+    private class LoadIconTask extends AsyncTask<AppInfo, Void, Drawable> {
+        private final WeakReference<ImageView> imageViewReference;
+
+        LoadIconTask(ImageView imageView) {
+            imageViewReference = new WeakReference<>(imageView);
+        }
+
+        @Override
+        protected Drawable doInBackground(AppInfo... params) {
+            AppInfo app = params[0];
+            return appManagementService.getIcon(app.getPackageName(), app.getUserId());
+        }
+
+        @Override
+        protected void onPostExecute(Drawable drawable) {
+            if (isCancelled()) {
+                drawable = null;
+            }
+
+            ImageView imageView = imageViewReference.get();
+            if (imageView != null && drawable != null) {
+                imageView.setImageDrawable(drawable);
+            }
         }
     }
 
@@ -124,7 +171,6 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         return false;
     }
 
-
     private void addSelectedApp(AppInfo app) {
         Map<String, String> meta = new HashMap<>();
         meta.put("packageName", app.getPackageName());
@@ -136,13 +182,12 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         selectedItems.add(newItem);
     }
 
-
     private void removeSelectedApp(AppInfo app) {
         for (int i = 0; i < selectedItems.size(); i++) {
             SettingsManager.SelectedItem item = selectedItems.get(i);
             if (item.getType().equals("application") &&
-                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
-                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
+                    item.getMeta().get(0).equals(app.getPackageName()) &&
+                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get(1)))) {
                 settingsManager.deleteSelectedItem(i);
                 selectedItems.remove(i);
                 break;
