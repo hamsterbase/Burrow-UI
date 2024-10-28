@@ -81,21 +81,20 @@ public class AppManagementService {
                 return null;
             }
         }
-
         UserHandle userHandle = null;
-        if (userId != null) {
-            for (UserHandle user : userManager.getUserProfiles()) {
-                if (String.valueOf(user.hashCode()).equals(userId)) {
-                    userHandle = user;
-                    break;
-                }
+        for (UserHandle user : userManager.getUserProfiles()) {
+            if (String.valueOf(user.hashCode()).equals(userId)) {
+                userHandle = user;
+                break;
             }
         }
         if (userHandle == null) {
             return null;
         }
         try {
-            iconCache.put(packageName, copyIcon(packageManager.getApplicationIcon(packageName)));
+            if (iconCache.get(packageName) == null) {
+                iconCache.put(packageName, copyIcon(packageManager.getApplicationIcon(packageName)));
+            }
         } catch (PackageManager.NameNotFoundException e) {
             //
         }
