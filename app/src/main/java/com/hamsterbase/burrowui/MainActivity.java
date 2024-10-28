@@ -137,10 +137,16 @@ public class MainActivity extends Activity {
                 String userId = item.getMeta().get("userId");
 
                 for (AppInfo app : allApps) {
-                    if (app.getPackageName().equals(packageName) &&
-                            (userId == null || userId.equals(app.getUserId()))) {
-                        selectedApps.add(app);
-                        break;
+                    if (app.getPackageName().equals(packageName)) {
+                        if (userId == null) {
+                            if (app.getUserId() == null) {
+                                selectedApps.add(app);
+                            }
+                        } else {
+                            if (userId != null && userId.equals(app.getUserId())) {
+                                selectedApps.add(app);
+                            }
+                        }
                     }
                 }
             }

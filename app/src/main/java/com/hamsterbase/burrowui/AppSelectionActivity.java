@@ -187,9 +187,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     private void addSelectedApp(AppInfo app) {
         Map<String, String> meta = new HashMap<>();
         meta.put("packageName", app.getPackageName());
-        if (app.getUserId() != null) {
-            meta.put("userId", app.getUserId());
-        }
+        meta.put("userId", app.getUserId());
         SettingsManager.SelectedItem newItem = new SettingsManager.SelectedItem("application", meta);
         settingsManager.pushSelectedItem(newItem);
         selectedItems.add(newItem);
