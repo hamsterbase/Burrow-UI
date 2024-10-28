@@ -5,8 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,12 +17,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.hamsterbase.burrowui.service.AppInfo;
+import com.hamsterbase.burrowui.service.AppManagementService;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 public class MainActivity extends Activity {
 
@@ -32,9 +32,9 @@ public class MainActivity extends Activity {
     private TextView dateTextView;
     private TextView debugTextView;
     private LinearLayout appLinearLayout;
-    private List<ResolveInfo> allApps;
-    private List<ResolveInfo> selectedApps = new ArrayList<>();
+    private List<AppInfo> selectedApps;
     private SettingsManager settingsManager;
+    private AppManagementService appManagementService;
     private Handler handler;
     private Runnable updateTimeRunnable;
     private BroadcastReceiver batteryReceiver;
@@ -53,7 +53,6 @@ public class MainActivity extends Activity {
         dateTextView = findViewById(R.id.dateTextView);
         appLinearLayout = findViewById(R.id.appLinearLayout);
 
-
         debugTextView = findViewById(R.id.debugTextView);
         if (BuildConfig.DEBUG) {
             debugTextView.setVisibility(View.VISIBLE);
@@ -64,13 +63,14 @@ public class MainActivity extends Activity {
         }
 
         settingsManager = new SettingsManager(this);
+        appManagementService = AppManagementService.getInstance(this);
 
         handler = new Handler(Looper.getMainLooper());
         updateTimeRunnable = new Runnable() {
             @Override
             public void run() {
                 updateTime();
-                handler.postDelayed(this, 1 * 1000); // Update every minute
+                handler.postDelayed(this, 1000); // Update every second
             }
         };
 
@@ -83,7 +83,6 @@ public class MainActivity extends Activity {
             return true;
         });
 
-        // Initialize battery receiver
         batteryReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -99,7 +98,6 @@ public class MainActivity extends Activity {
         displaySelectedApps();
         handler.post(updateTimeRunnable);
 
-        // Register battery receiver
         IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(batteryReceiver, filter);
     }
@@ -108,8 +106,6 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(updateTimeRunnable);
-
-        // Unregister battery receiver
         unregisterReceiver(batteryReceiver);
     }
 
@@ -131,23 +127,29 @@ public class MainActivity extends Activity {
     }
 
     private void loadApps() {
-        selectedApps.clear();
-        PackageManager pm = getPackageManager();
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        allApps = pm.queryIntentActivities(mainIntent, 0);
+        List<AppInfo> allApps = appManagementService.listApps();
+        selectedApps = new ArrayList<>();
+        List<SettingsManager.SelectedItem> selectedItems = settingsManager.getSelectedItems();
 
-        Set<String> savedApps = settingsManager.getSelectedApps();
-        for (ResolveInfo app : allApps) {
-            if (savedApps.contains(app.activityInfo.packageName)) {
-                selectedApps.add(app);
+        for (SettingsManager.SelectedItem item : selectedItems) {
+            if (item.getType().equals("application")) {
+                String packageName = item.getMeta().get("packageName");
+                String userId = item.getMeta().get("userId");
+
+                for (AppInfo app : allApps) {
+                    if (app.getPackageName().equals(packageName) &&
+                            (userId == null || userId.equals(app.getUserId()))) {
+                        selectedApps.add(app);
+                        break;
+                    }
+                }
             }
         }
     }
 
     private void displaySelectedApps() {
         appLinearLayout.removeAllViews();
-        for (ResolveInfo app : selectedApps) {
+        for (AppInfo app : selectedApps) {
             addAppToLayout(app);
         }
 
@@ -156,13 +158,13 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void addAppToLayout(ResolveInfo app) {
+    private void addAppToLayout(AppInfo app) {
         View appView = getLayoutInflater().inflate(R.layout.app_item, null);
         ImageView iconView = appView.findViewById(R.id.appIcon);
         TextView nameView = appView.findViewById(R.id.appName);
 
-        iconView.setImageDrawable(app.loadIcon(getPackageManager()));
-        nameView.setText(app.loadLabel(getPackageManager()));
+        iconView.setImageDrawable(appManagementService.getIcon(app.getPackageName(), app.getUserId()));
+        nameView.setText(app.getLabel());
         appView.setOnClickListener(v -> launchApp(app));
         appLinearLayout.addView(appView);
     }
@@ -172,16 +174,18 @@ public class MainActivity extends Activity {
         ImageView iconView = settingsAppView.findViewById(R.id.appIcon);
         TextView nameView = settingsAppView.findViewById(R.id.appName);
 
-        iconView.setImageResource(R.drawable.ic_settings); // Make sure to add this icon to your drawable resources
+        iconView.setImageResource(R.drawable.ic_settings);
         nameView.setText("Launcher Settings");
         settingsAppView.setOnClickListener(v -> openSettingsActivity());
         appLinearLayout.addView(settingsAppView);
     }
 
-    private void launchApp(ResolveInfo app) {
-        String packageName = app.activityInfo.packageName;
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+    private void launchApp(AppInfo app) {
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(app.getPackageName());
         if (launchIntent != null) {
+            if (app.getUserId() != null) {
+                launchIntent.putExtra("android.intent.extra.USER_ID", Integer.parseInt(app.getUserId()));
+            }
             startActivity(launchIntent);
         }
     }

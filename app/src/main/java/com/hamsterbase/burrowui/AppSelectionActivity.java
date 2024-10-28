@@ -1,9 +1,6 @@
 package com.hamsterbase.burrowui;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,17 +12,20 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import com.hamsterbase.burrowui.service.AppInfo;
+import com.hamsterbase.burrowui.service.AppManagementService;
+
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class AppSelectionActivity extends Activity implements NavigationBar.OnBackClickListener {
-    private List<ResolveInfo> allApps;
-    private Set<String> selectedApps = new HashSet<>();
+    private List<AppInfo> allApps;
+    private List<SettingsManager.SelectedItem> selectedItems;
     private ListView appListView;
     private AppAdapter appAdapter;
     private SettingsManager settingsManager;
+    private AppManagementService appManagementService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +37,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         appListView = findViewById(R.id.appListView);
 
         settingsManager = new SettingsManager(this);
+        appManagementService = AppManagementService.getInstance(this);
         loadApps();
         appAdapter = new AppAdapter();
         appListView.setAdapter(appAdapter);
@@ -47,20 +48,8 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     }
 
     private void loadApps() {
-        PackageManager pm = getPackageManager();
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<ResolveInfo> tempApps = pm.queryIntentActivities(mainIntent, 0);
-        allApps = new ArrayList<>();
-        String currentPackageName = getPackageName();
-
-        for (ResolveInfo info : tempApps) {
-            if (!info.activityInfo.packageName.equals(currentPackageName)) {
-                allApps.add(info);
-            }
-        }
-
-        selectedApps = settingsManager.getSelectedApps();
+        allApps = appManagementService.listApps();
+        selectedItems = settingsManager.getSelectedItems();
     }
 
     public void onBackClick() {
@@ -97,22 +86,21 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
                 holder = (ViewHolder) convertView.getTag();
             }
 
-            ResolveInfo app = allApps.get(position);
-            holder.appIcon.setImageDrawable(app.loadIcon(getPackageManager()));
-            holder.appName.setText(app.loadLabel(getPackageManager()));
+            AppInfo app = allApps.get(position);
+            holder.appIcon.setImageDrawable(appManagementService.getIcon(app.getPackageName(), app.getUserId()));
+            holder.appName.setText(app.getLabel());
 
-            boolean isSelected = selectedApps.contains(app.activityInfo.packageName);
+            boolean isSelected = isAppSelected(app);
             holder.appCheckImage.setImageResource(isSelected ? R.drawable.ic_checked : R.drawable.ic_unchecked);
 
             convertView.setOnClickListener(v -> {
-                boolean newState = !selectedApps.contains(app.activityInfo.packageName);
+                boolean newState = !isAppSelected(app);
                 if (newState) {
-                    selectedApps.add(app.activityInfo.packageName);
+                    addSelectedApp(app);
                 } else {
-                    selectedApps.remove(app.activityInfo.packageName);
+                    removeSelectedApp(app);
                 }
                 holder.appCheckImage.setImageResource(newState ? R.drawable.ic_checked : R.drawable.ic_unchecked);
-                settingsManager.setSelectedApps(selectedApps);
             });
 
             return convertView;
@@ -122,6 +110,42 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
             ImageView appIcon;
             TextView appName;
             ImageView appCheckImage;
+        }
+    }
+
+    private boolean isAppSelected(AppInfo app) {
+        for (SettingsManager.SelectedItem item : selectedItems) {
+            if (item.getType().equals("application") &&
+                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
+                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addSelectedApp(AppInfo app) {
+        Map<String, String> meta = new HashMap<>();
+        meta.put("packageName", app.getPackageName());
+        if (app.getUserId() != null) {
+            meta.put("userId", app.getUserId());
+        }
+        SettingsManager.SelectedItem newItem = new SettingsManager.SelectedItem("application", meta);
+        settingsManager.pushSelectedItem(newItem);
+        selectedItems.add(newItem);
+    }
+
+
+    private void removeSelectedApp(AppInfo app) {
+        for (int i = 0; i < selectedItems.size(); i++) {
+            SettingsManager.SelectedItem item = selectedItems.get(i);
+            if (item.getType().equals("application") &&
+                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
+                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
+                settingsManager.deleteSelectedItem(i);
+                selectedItems.remove(i);
+                break;
+            }
         }
     }
 }
