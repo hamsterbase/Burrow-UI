@@ -4,8 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_marginTop="24dp"
-    >
+    android:layout_marginTop="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,6 +19,14 @@
             android:layout_weight="1"
             android:background="@drawable/edit_text_border">
 
+            <ImageView
+                android:layout_marginStart="8dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_search"
+                android:scaleType="fitCenter"
+                android:layout_gravity="start|center_vertical" />
+
             <EditText
                 android:id="@+id/search_input"
                 android:layout_width="match_parent"
@@ -27,26 +34,24 @@
                 android:hint="@string/search_apps"
                 android:inputType="text"
                 android:background="@null"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="36dp"
                 android:textSize="14dp"
                 tools:ignore="SpUsage"
                 android:imeOptions="actionDone"
                 android:singleLine="true"
-                android:gravity="center_vertical"
-                />
+                android:gravity="center_vertical" />
 
             <ImageButton
                 android:id="@+id/clear_button"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:layout_gravity="end|center_vertical"
                 android:src="@drawable/ic_close"
                 android:background="@null"
-                android:layout_marginEnd="6dp"
-                android:layout_marginStart="6dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
                 android:visibility="gone"
-                android:scaleType="fitCenter"
-                />
+                android:scaleType="fitCenter" />
 
         </FrameLayout>
 
@@ -59,7 +64,7 @@
             android:padding="0dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:text="@string/exit"
+            android:text="@string/cancel"
             android:textColor="@android:color/black"
             android:gravity="center"
             style="?android:attr/borderlessButtonStyle" />
