@@ -67,6 +67,7 @@
             android:text="@string/cancel"
             android:textColor="@android:color/black"
             android:gravity="center"
+            android:textAllCaps="false"
             style="?android:attr/borderlessButtonStyle" />
 
     </LinearLayout>
