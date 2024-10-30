@@ -27,6 +27,7 @@
         <activity android:name="com.hamsterbase.burrowui.SettingsActivity" />
         <activity android:name="com.hamsterbase.burrowui.AppSelectionActivity" />
         <activity android:name="com.hamsterbase.burrowui.AboutActivity" />
+        <activity android:name="com.hamsterbase.burrowui.SearchActivity" />
 
 
     </application>
