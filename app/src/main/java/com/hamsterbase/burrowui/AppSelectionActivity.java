@@ -42,6 +42,8 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         appListView = findViewById(R.id.appListView);
         appListView.setDivider(null);
         appListView.setDividerHeight(0);
+        appListView.setVerticalScrollBarEnabled(false);
+        appListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         settingsManager = new SettingsManager(this);
         appManagementService = ((BurrowUIApplication) getApplication()).getAppManagementService();

@@ -11,6 +11,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -45,13 +46,18 @@ public class SearchActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         searchInput = findViewById(R.id.search_input);
         searchInput.requestFocus();
         exitButton = findViewById(R.id.exit_button);
         clearButton = findViewById(R.id.clear_button);
         appListView = findViewById(R.id.app_list);
-
+        appListView.setDivider(null);
+        appListView.setVerticalScrollBarEnabled(false);
+        appListView.setDividerHeight(0);
+        appListView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         appManagementService = ((BurrowUIApplication) getApplication()).getAppManagementService();
 
         allApps = appManagementService.listApps();
@@ -178,10 +184,10 @@ public class SearchActivity extends Activity {
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = inflater.inflate(R.layout.app_list_item, parent, false);
+                convertView = inflater.inflate(R.layout.app_item, parent, false);
                 holder = new ViewHolder();
-                holder.appIcon = convertView.findViewById(R.id.app_icon);
-                holder.appName = convertView.findViewById(R.id.app_name);
+                holder.appIcon = convertView.findViewById(R.id.appIcon);
+                holder.appName = convertView.findViewById(R.id.appName);
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();

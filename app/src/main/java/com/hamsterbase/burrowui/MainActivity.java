@@ -56,7 +56,6 @@ public class MainActivity extends Activity {
         timeTextView = findViewById(R.id.timeTextView);
         dateTextView = findViewById(R.id.dateTextView);
         appLinearLayout = findViewById(R.id.appLinearLayout);
-
         debugTextView = findViewById(R.id.debugTextView);
         if (BuildConfig.DEBUG) {
             debugTextView.setVisibility(View.VISIBLE);
