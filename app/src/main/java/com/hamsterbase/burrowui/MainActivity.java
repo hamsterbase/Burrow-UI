@@ -16,6 +16,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.hamsterbase.burrowui.service.AppInfo;
@@ -31,7 +32,6 @@ public class MainActivity extends Activity {
 
     private TextView timeTextView;
     private TextView dateTextView;
-    private TextView debugTextView;
     private LinearLayout appLinearLayout;
     private List<AppInfo> selectedApps;
     private SettingsManager settingsManager;
@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
 
     private float touchStartY;
     private static final float SWIPE_THRESHOLD = 200;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +57,12 @@ public class MainActivity extends Activity {
         timeTextView = findViewById(R.id.timeTextView);
         dateTextView = findViewById(R.id.dateTextView);
         appLinearLayout = findViewById(R.id.appLinearLayout);
-        debugTextView = findViewById(R.id.debugTextView);
+
+        ScrollView appList = findViewById(R.id.appScrollList);
+        appList.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        appList.setVerticalScrollBarEnabled(false);
+
+        TextView debugTextView = findViewById(R.id.debugTextView);
         if (BuildConfig.DEBUG) {
             debugTextView.setVisibility(View.VISIBLE);
             String debugInfo = "Debug: " + Build.MODEL + " - " + Build.VERSION.RELEASE;
@@ -81,25 +87,51 @@ public class MainActivity extends Activity {
         displaySelectedApps();
 
         View rootView = findViewById(android.R.id.content);
-        rootView.setOnLongClickListener(v -> {
-            openSettingsActivity();
-            return true;
-        });
+
 
         rootView.setOnTouchListener(new View.OnTouchListener() {
+            private boolean isLongPress = false;
+            private Handler longPressHandler = new Handler();
+            private static final long LONG_PRESS_TIMEOUT = 600;
+
+            private Runnable longPressRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    isLongPress = true;
+                    openSettingsActivity();
+                }
+            };
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         touchStartY = event.getY();
+                        isLongPress = false;
+                        longPressHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
                         return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        if (Math.abs(event.getY() - touchStartY) > SWIPE_THRESHOLD) {
+                            longPressHandler.removeCallbacks(longPressRunnable);
+                        }
+                        return true;
+
                     case MotionEvent.ACTION_UP:
+                        longPressHandler.removeCallbacks(longPressRunnable);
+                        if (isLongPress) {
+                            return true;
+                        }
                         float touchEndY = event.getY();
                         float deltaY = touchEndY - touchStartY;
                         if (deltaY > SWIPE_THRESHOLD) {
                             openSearchActivity();
                             return true;
                         }
+                        return false;
+
+                    case MotionEvent.ACTION_CANCEL:
+                        longPressHandler.removeCallbacks(longPressRunnable);
                         return false;
                 }
                 return false;
@@ -153,23 +185,11 @@ public class MainActivity extends Activity {
         List<AppInfo> allApps = appManagementService.listApps();
         selectedApps = new ArrayList<>();
         List<SettingsManager.SelectedItem> selectedItems = settingsManager.getSelectedItems();
-
         for (SettingsManager.SelectedItem item : selectedItems) {
             if (item.getType().equals("application")) {
-                String packageName = item.getMeta().get("packageName");
-                String userId = item.getMeta().get("userId");
-
                 for (AppInfo app : allApps) {
-                    if (app.getPackageName().equals(packageName)) {
-                        if (userId == null) {
-                            if (app.getUserId() == null) {
-                                selectedApps.add(app);
-                            }
-                        } else {
-                            if (userId != null && userId.equals(app.getUserId())) {
-                                selectedApps.add(app);
-                            }
-                        }
+                    if (appManagementService.isSelectItemEqualWith(app, item)) {
+                        selectedApps.add(app);
                     }
                 }
             }
@@ -194,7 +214,7 @@ public class MainActivity extends Activity {
 
         iconView.setImageDrawable(appManagementService.getIcon(app.getPackageName(), app.getUserId()));
         nameView.setText(app.getLabel());
-        appView.setOnClickListener(v -> launchApp(app));
+        appView.setOnClickListener(v -> appManagementService.launchApp(app));
         appLinearLayout.addView(appView);
     }
 
@@ -204,19 +224,9 @@ public class MainActivity extends Activity {
         TextView nameView = settingsAppView.findViewById(R.id.appName);
 
         iconView.setImageResource(R.drawable.ic_settings);
-        nameView.setText("Launcher Settings");
+        nameView.setText(R.string.launcher_settings);
         settingsAppView.setOnClickListener(v -> openSettingsActivity());
         appLinearLayout.addView(settingsAppView);
-    }
-
-    private void launchApp(AppInfo app) {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(app.getPackageName());
-        if (launchIntent != null) {
-            if (app.getUserId() != null) {
-                launchIntent.putExtra("android.intent.extra.USER_ID", Integer.parseInt(app.getUserId()));
-            }
-            startActivity(launchIntent);
-        }
     }
 
     private void openSettingsActivity() {

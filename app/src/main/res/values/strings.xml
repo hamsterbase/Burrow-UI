@@ -2,4 +2,7 @@
     <string name="app_name">Burrow UI</string>
     <string name="search_apps">Search apps</string>
     <string name="cancel">Cancel</string>
+    <string name="unknown">Unknown</string>
+    <string name="settings">Settings</string>
+    <string name="launcher_settings">Launcher Settings</string>
 </resources>

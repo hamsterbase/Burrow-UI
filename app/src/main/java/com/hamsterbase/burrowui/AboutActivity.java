@@ -41,14 +41,13 @@ public class AboutActivity extends Activity implements NavigationBar.OnBackClick
             String version = pInfo.versionName;
             versionTextView.setText(version);
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-            versionTextView.setText("Unknown");
+            versionTextView.setText(R.string.unknown);
         }
     }
 
     private void setupLicenseInfo() {
         licenseSection.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hamsterbase/Burrow-UI/blob/main/LICENSE"));
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hamsterbase/Burrow-UI/blob/main/License"));
             startActivity(intent);
         });
     }

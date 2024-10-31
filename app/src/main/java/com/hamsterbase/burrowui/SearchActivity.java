@@ -121,7 +121,7 @@ public class SearchActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 AppInfo app = filteredApps.get(position);
-                launchApp(app);
+                appManagementService.launchApp(app);
             }
         });
 
@@ -146,17 +146,6 @@ public class SearchActivity extends Activity {
             clearButton.setVisibility(View.GONE);
         }
     }
-
-    private void launchApp(AppInfo app) {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(app.getPackageName());
-        if (launchIntent != null) {
-            if (app.getUserId() != null) {
-                launchIntent.putExtra("android.intent.extra.USER_ID", Integer.parseInt(app.getUserId()));
-            }
-            startActivity(launchIntent);
-        }
-    }
-
 
     private class AppAdapter extends BaseAdapter {
         private LayoutInflater inflater;

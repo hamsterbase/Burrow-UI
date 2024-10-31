@@ -4,11 +4,14 @@ public class AppInfo {
     private String label;
     private String packageName;
     private String userId;
+    private String componentName;
 
-    public AppInfo(String label, String packageName, String userId) {
+
+    public AppInfo(String label, String packageName, String userId, String componentName) {
         this.label = label;
         this.packageName = packageName;
         this.userId = userId;
+        this.componentName = componentName;
     }
 
     // Getters and setters
@@ -16,23 +19,15 @@ public class AppInfo {
         return label;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
     public String getPackageName() {
         return packageName;
-    }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public String getComponentName() {
+        return componentName;
     }
 }

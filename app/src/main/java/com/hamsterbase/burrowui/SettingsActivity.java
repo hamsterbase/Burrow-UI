@@ -2,20 +2,20 @@ package com.hamsterbase.burrowui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.WindowManager;
 import android.view.View;
-import android.widget.ImageView;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+
+import com.hamsterbase.burrowui.components.SettingsItem;
+import com.hamsterbase.burrowui.components.SwitchSettingsItem;
 
 public class SettingsActivity extends Activity implements NavigationBar.OnBackClickListener {
 
-    private ImageView showSettingsIconSwitch;
     private SettingsManager settingsManager;
-    private View selectAppsSection;
-    private View settingsIconSection;
-    private View aboutSection;
-    private View donateSection;
+    private LinearLayout settingsContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,47 +24,58 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_settings);
-        showSettingsIconSwitch = findViewById(R.id.showSettingsIconSwitch);
-        selectAppsSection = findViewById(R.id.selectAppsSection);
-        settingsIconSection = findViewById(R.id.settingsIconSection);
-        aboutSection = findViewById(R.id.aboutSection);
-        donateSection = findViewById(R.id.donateSection);
-
+        settingsContainer = findViewById(R.id.settingsContainer);
         settingsManager = new SettingsManager(this);
 
-        setupShowSettingsIconSwitch();
+        addSection("Donate", "Support the development of this app", R.drawable.ic_link,
+                v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hamsterbase"))));
 
-        selectAppsSection.setOnClickListener(v -> {
-            Intent intent = new Intent(SettingsActivity.this, AppSelectionActivity.class);
-            startActivity(intent);
-        });
+        addLine();
 
-        aboutSection.setOnClickListener(v -> {
-            Intent intent = new Intent(SettingsActivity.this, AboutActivity.class);
-            startActivity(intent);
-        });
 
-        donateSection.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hamsterbase"));
-            startActivity(intent);
-        });
+        addSection("Select Apps", "Choose which apps to display in the launcher", R.drawable.ic_right,
+                v -> startActivity(new Intent(SettingsActivity.this, AppSelectionActivity.class)));
+
+        addLine();
+        
+        settingsContainer.addView(new SwitchSettingsItem(
+                this,
+                "Settings Icon",
+                "Show or hide the settings icon in the homepage",
+                settingsManager.isShowSettingsIcon(),
+                isChecked -> {
+                    settingsManager.setShowSettingsIcon(isChecked);
+                }
+        ));
+
+        addLine();
+
+        addSection("About", "View app information", R.drawable.ic_right,
+                v -> startActivity(new Intent(SettingsActivity.this, AboutActivity.class)));
 
         NavigationBar navigationBar = findViewById(R.id.navigation_bar);
         navigationBar.setOnBackClickListener(this);
     }
 
-    private void setupShowSettingsIconSwitch() {
-        boolean showSettingsIcon = settingsManager.isShowSettingsIcon();
-        updateSwitchImage(showSettingsIcon);
-        settingsIconSection.setOnClickListener(v -> {
-            boolean newState = !settingsManager.isShowSettingsIcon();
-            updateSwitchImage(newState);
-            settingsManager.setShowSettingsIcon(newState);
-        });
+    private void addSection(String title, String description, int iconResId, View.OnClickListener listener) {
+        SettingsItem section = new SettingsItem(this);
+        section.setTitle(title);
+        section.setDescription(description);
+        section.setIcon(iconResId);
+        section.setOnClickListener(listener);
+        settingsContainer.addView(section);
     }
 
-    private void updateSwitchImage(boolean isOn) {
-        showSettingsIconSwitch.setImageResource(isOn ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
+
+    private void addLine() {
+        View dividerView = new View(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1);
+        int marginInPixels = (int) (24 * getResources().getDisplayMetrics().density);
+        params.setMargins(marginInPixels, 0, marginInPixels, 0);
+        dividerView.setLayoutParams(params);
+        dividerView.setBackgroundColor(Color.BLACK);
+        settingsContainer.addView(dividerView);
     }
 
     @Override

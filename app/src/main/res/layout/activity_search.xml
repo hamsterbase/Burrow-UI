@@ -68,7 +68,7 @@
             android:textColor="@android:color/black"
             android:gravity="center"
             android:textAllCaps="false"
-            style="?android:attr/borderlessButtonStyle" />
+            android:background="@null" />
 
     </LinearLayout>
 

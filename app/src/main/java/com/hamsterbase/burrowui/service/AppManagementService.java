@@ -1,6 +1,7 @@
 package com.hamsterbase.burrowui.service;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
@@ -9,6 +10,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.UserHandle;
 import android.os.UserManager;
+
+import com.hamsterbase.burrowui.SettingsManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,7 +66,8 @@ public class AppManagementService {
                 appInfoList.add(new AppInfo(
                         activityInfo.getLabel().toString(),
                         activityInfo.getApplicationInfo().packageName,
-                        userId
+                        userId,
+                        activityInfo.getComponentName().toString()
                 ));
             }
         }
@@ -117,5 +121,50 @@ public class AppManagementService {
             return new BitmapDrawable(context.getResources(), bitmap.copy(bitmap.getConfig(), true));
         }
         return icon.getConstantState().newDrawable().mutate();
+    }
+
+
+    public boolean isAppSelected(AppInfo app, List<SettingsManager.SelectedItem> selectedItems) {
+        for (SettingsManager.SelectedItem item : selectedItems) {
+            if (isSelectItemEqualWith(app, item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isSelectItemEqualWith(AppInfo app, SettingsManager.SelectedItem item) {
+        if (item.getType().equals("application")
+                && app.getPackageName().equals(item.getMeta().get("packageName"))
+                && app.getComponentName().equals(item.getMeta().get("componentName"))) {
+            if (app.getUserId() == null) {
+                return item.getMeta().get("userId") == null;
+            } else {
+                return app.getUserId().equals(item.getMeta().get("packageName"));
+            }
+        }
+        return false;
+    }
+
+    public SettingsManager.SelectedItem to(AppInfo app) {
+        Map<String, String> meta = new HashMap<>();
+        meta.put("packageName", app.getPackageName());
+        meta.put("userId", app.getUserId());
+        meta.put("componentName", app.getComponentName());
+        return new SettingsManager.SelectedItem("application", meta);
+    }
+
+    public void launchApp(AppInfo app) {
+        UserHandle currentUser = android.os.Process.myUserHandle();
+        if (app.getUserId() != null) {
+            currentUser = userCache.get(app.getUserId());
+        }
+        List<LauncherActivityInfo> activities = launcherApps.getActivityList(app.getPackageName(), currentUser);
+        for (LauncherActivityInfo activityInfo : activities) {
+            if (activityInfo.getComponentName().toString().equals(app.getComponentName())) {
+                launcherApps.startMainActivity(activityInfo.getComponentName(), currentUser, null, null);
+                break;
+            }
+        }
     }
 }

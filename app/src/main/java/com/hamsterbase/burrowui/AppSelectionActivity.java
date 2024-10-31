@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,11 +28,10 @@ import java.util.Map;
 public class AppSelectionActivity extends Activity implements NavigationBar.OnBackClickListener {
     private List<AppInfo> allApps;
     private List<SettingsManager.SelectedItem> selectedItems;
-    private ListView appListView;
     private AppAdapter appAdapter;
     private SettingsManager settingsManager;
     private AppManagementService appManagementService;
-    private SparseArray<Boolean> selectedState;
+    private SparseBooleanArray selectedState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +40,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_app_selection);
-        appListView = findViewById(R.id.appListView);
+        ListView appListView = findViewById(R.id.appListView);
         appListView.setDivider(null);
         appListView.setDividerHeight(0);
         appListView.setVerticalScrollBarEnabled(false);
@@ -59,9 +60,9 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     private void loadApps() {
         allApps = appManagementService.listApps();
         selectedItems = settingsManager.getSelectedItems();
-        selectedState = new SparseArray<>();
+        selectedState = new SparseBooleanArray();
         for (int i = 0; i < allApps.size(); i++) {
-            selectedState.put(i, isAppSelected(allApps.get(i)));
+            selectedState.put(i, appManagementService.isAppSelected(allApps.get(i), selectedItems));
         }
         if (appAdapter != null) {
             appAdapter.notifyDataSetChanged();
@@ -175,22 +176,9 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
         }
     }
 
-    private boolean isAppSelected(AppInfo app) {
-        for (SettingsManager.SelectedItem item : selectedItems) {
-            if (item.getType().equals("application") &&
-                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
-                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private void addSelectedApp(AppInfo app) {
-        Map<String, String> meta = new HashMap<>();
-        meta.put("packageName", app.getPackageName());
-        meta.put("userId", app.getUserId());
-        SettingsManager.SelectedItem newItem = new SettingsManager.SelectedItem("application", meta);
+        SettingsManager.SelectedItem newItem = appManagementService.to(app);
         settingsManager.pushSelectedItem(newItem);
         selectedItems.add(newItem);
     }
@@ -198,9 +186,7 @@ public class AppSelectionActivity extends Activity implements NavigationBar.OnBa
     private void removeSelectedApp(AppInfo app) {
         for (int i = 0; i < selectedItems.size(); i++) {
             SettingsManager.SelectedItem item = selectedItems.get(i);
-            if (item.getType().equals("application") &&
-                    item.getMeta().get("packageName").equals(app.getPackageName()) &&
-                    (app.getUserId() == null || app.getUserId().equals(item.getMeta().get("userId")))) {
+            if (appManagementService.isSelectItemEqualWith(app, item)) {
                 settingsManager.deleteSelectedItem(i);
                 selectedItems.remove(i);
                 break;
