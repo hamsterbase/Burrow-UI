@@ -31,13 +31,17 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
                 v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hamsterbase"))));
 
         addLine();
-
-
+        
         addSection("Select Apps", "Choose which apps to display in the launcher", R.drawable.ic_right,
                 v -> startActivity(new Intent(SettingsActivity.this, AppSelectionActivity.class)));
 
         addLine();
-        
+
+        addSection("Sort Apps", "Sort app order", R.drawable.ic_right,
+                v -> startActivity(new Intent(SettingsActivity.this, AppSortActivity.class)));
+
+        addLine();
+
         settingsContainer.addView(new SwitchSettingsItem(
                 this,
                 "Settings Icon",

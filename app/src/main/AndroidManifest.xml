@@ -17,6 +17,7 @@
             android:stateNotNeeded="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -27,9 +28,11 @@
         <activity android:name=".AppSelectionActivity" />
         <activity android:name=".AboutActivity" />
         <activity android:name=".SearchActivity" />
+        <activity android:name=".AppSortActivity" />
 
 
     </application>
+
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
