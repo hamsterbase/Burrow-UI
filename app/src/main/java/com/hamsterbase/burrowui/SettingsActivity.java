@@ -27,25 +27,25 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
         settingsContainer = findViewById(R.id.settingsContainer);
         settingsManager = new SettingsManager(this);
 
-        addSection("Donate", "Support the development of this app", R.drawable.ic_link,
+        addSection("Support Us", "Help us improve the app", R.drawable.ic_link,
                 v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hamsterbase"))));
 
         addLine();
-        
-        addSection("Select Apps", "Choose which apps to display in the launcher", R.drawable.ic_right,
+
+        addSection("App Selection", "Manage visible apps in launcher", R.drawable.ic_right,
                 v -> startActivity(new Intent(SettingsActivity.this, AppSelectionActivity.class)));
 
         addLine();
 
-        addSection("Sort Apps", "Sort app order", R.drawable.ic_right,
+        addSection("App Sorting", "Customize app order", R.drawable.ic_right,
                 v -> startActivity(new Intent(SettingsActivity.this, AppSortActivity.class)));
 
         addLine();
 
         settingsContainer.addView(new SwitchSettingsItem(
                 this,
-                "Settings Icon",
-                "Show or hide the settings icon in the homepage",
+                "Settings Icon Visibility",
+                "When enabled, settings icon appears on home screen. Alternatively, long press time to open settings.",
                 settingsManager.isShowSettingsIcon(),
                 isChecked -> {
                     settingsManager.setShowSettingsIcon(isChecked);
@@ -54,7 +54,7 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
 
         addLine();
 
-        addSection("About", "View app information", R.drawable.ic_right,
+        addSection("App Info", "View application details", R.drawable.ic_right,
                 v -> startActivity(new Intent(SettingsActivity.this, AboutActivity.class)));
 
         NavigationBar navigationBar = findViewById(R.id.navigation_bar);
@@ -69,7 +69,6 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
         section.setOnClickListener(listener);
         settingsContainer.addView(section);
     }
-
 
     private void addLine() {
         View dividerView = new View(this);
