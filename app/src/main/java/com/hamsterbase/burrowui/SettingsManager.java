@@ -19,6 +19,7 @@ public class SettingsManager {
     private static final String PREF_DATE_FORMAT = "date_format";
     private static final String DEFAULT_DATE_FORMAT = "EEE, MMM d";
     private static final String SELECTED_ITEMS_KEY = "SelectedItems";
+    private static final String ENABLE_PULL_DOWN_SEARCH_KEY = "EnablePullDownSearch";
 
     private SharedPreferences sharedPreferences;
 
@@ -113,6 +114,15 @@ public class SettingsManager {
         }
     }
 
+    public boolean isEnablePullDownSearch() {
+        return sharedPreferences.getBoolean(ENABLE_PULL_DOWN_SEARCH_KEY, true);
+    }
+
+    public void setEnablePullDownSearch(boolean enable) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(ENABLE_PULL_DOWN_SEARCH_KEY, enable);
+        editor.apply();
+    }
 
     public static class SelectedItem {
         private String type;

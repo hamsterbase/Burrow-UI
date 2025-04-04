@@ -4,28 +4,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/settingsContainer"
-        android:background="@color/white"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
-        android:layout_above="@+id/navigation_bar">
+        android:layout_above="@+id/navigation_bar"
+        android:fillViewport="true">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/settingsContainer"
+            android:background="@color/white"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/settings"
-            android:padding="24dp"
-            android:textSize="24dp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"
-            tools:ignore="SpUsage" />
+            android:orientation="vertical"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings"
+                android:padding="24dp"
+                android:textSize="24dp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"
+                tools:ignore="SpUsage" />
 
-    </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 
     <com.hamsterbase.burrowui.NavigationBar
         android:id="@+id/navigation_bar"

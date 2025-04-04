@@ -1,6 +1,7 @@
 package com.hamsterbase.burrowui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -43,7 +44,8 @@ public class MainActivity extends Activity {
 
     private float touchStartY;
     private static final float SWIPE_THRESHOLD = 200;
-
+    private static final float TOP_PULL_DOWN_PERCENT = 0.15f; // 25% of screen height
+    private int screenHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,12 +89,15 @@ public class MainActivity extends Activity {
         displaySelectedApps();
 
         View rootView = findViewById(android.R.id.content);
-
+        rootView.post(() -> {
+            screenHeight = rootView.getHeight();
+        });
 
         rootView.setOnTouchListener(new View.OnTouchListener() {
             private boolean isLongPress = false;
             private Handler longPressHandler = new Handler();
             private static final long LONG_PRESS_TIMEOUT = 600;
+            private boolean isPullDownEnabled = false;
 
             private Runnable longPressRunnable = new Runnable() {
                 @Override
@@ -104,15 +109,20 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                if (!settingsManager.isEnablePullDownSearch()) {
+                    return false;
+                }
+
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         touchStartY = event.getY();
                         isLongPress = false;
+                        isPullDownEnabled = touchStartY > (screenHeight * TOP_PULL_DOWN_PERCENT);
                         longPressHandler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT);
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
-                        if (Math.abs(event.getY() - touchStartY) > SWIPE_THRESHOLD) {
+                        if (isPullDownEnabled && Math.abs(event.getY() - touchStartY) > SWIPE_THRESHOLD) {
                             longPressHandler.removeCallbacks(longPressRunnable);
                         }
                         return true;
@@ -124,7 +134,7 @@ public class MainActivity extends Activity {
                         }
                         float touchEndY = event.getY();
                         float deltaY = touchEndY - touchStartY;
-                        if (deltaY > SWIPE_THRESHOLD) {
+                        if (isPullDownEnabled && deltaY > SWIPE_THRESHOLD) {
                             openSearchActivity();
                             return true;
                         }

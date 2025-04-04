@@ -27,8 +27,8 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
         settingsContainer = findViewById(R.id.settingsContainer);
         settingsManager = new SettingsManager(this);
 
-        addSection("Support Us", "Help us improve the app", R.drawable.ic_link,
-                v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hamsterbase"))));
+        addSection("HamsterBase Tasks", "E-ink todo app", R.drawable.ic_link,
+                v -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://tasks.hamsterbase.com/"))));
 
         addLine();
 
@@ -49,6 +49,18 @@ public class SettingsActivity extends Activity implements NavigationBar.OnBackCl
                 settingsManager.isShowSettingsIcon(),
                 isChecked -> {
                     settingsManager.setShowSettingsIcon(isChecked);
+                }
+        ));
+
+        addLine();
+
+        settingsContainer.addView(new SwitchSettingsItem(
+                this,
+                "Pull-down Search",
+                "When enabled, pull down from the top of the screen to open search.",
+                settingsManager.isEnablePullDownSearch(),
+                isChecked -> {
+                    settingsManager.setEnablePullDownSearch(isChecked);
                 }
         ));
 
